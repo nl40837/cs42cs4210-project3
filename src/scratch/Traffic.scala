@@ -63,22 +63,50 @@ class TrafficModel (name: String = "Traffic", reps: Int = 1, animating: Boolean 
     // Create Model Components
     val southSource = Source("south_source", this, () => Car(), 0, nStop, iArrivalRV, (850,650))
     //embarcadero rd entrance
-    val southRampSource = Source("emercadero_entrance", this, () => Car(), 1, nStop, iArrivalRV, (900,600))
+    val embarRampSource = Source("embarcadero_entrance", this, () => Car(), 1, nStop, iArrivalRV, (900,600))
     val northSink = Sink("north_sink", (150,10))
-    val sEntJunction = Junction("s_ent_j", this, Sharp(0.0), (800,600))
-    val northRoad = Route("n_road", 4, southSource, sEntJunction, moveRV)
-    val northRampRoad = Transport("nr_road", southRampSource, sEntJunction, moveRV)
-    val toNSink = Route("t_nsink", 4, sEntJunction, northSink, moveRV)
-
+    val embarEntJunc = Junction("s_ent_j", this, Sharp(0.0), (800,600))
+    val northRoad = Route("n_road", 4, southSource, embarEntJunc, moveRV)
+    val embarEntRamp = Transport("nr_road", embarRampSource, embarEntJunc, moveRV)
 
     val northSource = Source("north_source", this, () => Car(), 2, nStop, iArrivalRV, (10,10))
     val southSink = Sink("south_sink", (750,700))
-    //emarcadero rd exit
-    val southRampSink = Sink("emercadero_exit", (660,700))
-    val nExJunction = Junction("n_ex_j", this, Sharp(0.0), (700,650))
-    val southRampRoad = Transport("sr_road", nExJunction, southRampSink, moveRV)
-    val southRoad = Route("s_road", 4, northSource, nExJunction, moveRV)
-    val toSSink = Route("t_ssink", 4, nExJunction, southSink, moveRV)
+    //embarcadero rd exit
+    val embarRampSink = Sink("embarcadero_exit", (660,700))
+    val embarExJunc = Junction("n_ex_j", this, Sharp(0.0), (700,650))
+    val embarExRamp = Transport("embar_exit", embarExJunc, embarRampSink, moveRV)
+    val toSSink = Route("t_ssink", 4, embarExJunc, southSink, moveRV)
+
+    val willowRampSink = Sink("willowrd_sink", (250,10))
+    val willowExJunc = Junction("w_ex_j", this, Sharp(0.0), (250,100))
+    val willowExRamp = Transport("willowrd_exit", willowExJunc, willowRampSink, moveRV)
+    val willowToSink = Route("w_t_s", 4, willowExJunc, northSink, moveRV)
+
+    val willowRampSource = Source("willowrd_src", this, () => Car(), 3, nStop, iArrivalRV, (10,100))
+    val willowEntJunc = Junction("w_ent_j", this, Sharp(0.0), (150,150))
+    val southRoad = Route("s_road", 4, northSource, willowEntJunc, moveRV)
+    val willowEntRamp = Transport("willowrd_ent", willowRampSource, willowEntJunc, moveRV)
+
+    val uniAveNorthRampSink = Sink("uni_n_sink", (550,310))
+    val uniAveNorthExJunc = Junction("uni_n_ex_j", this, Sharp(0.0), (580,400))
+    val uniAveNorthExRamp = Transport("uni_n_exit", uniAveNorthExJunc, uniAveNorthRampSink, moveRV)
+    val northToUniEx = Route("n_t_uni", 4, embarEntJunc, uniAveNorthExJunc, moveRV)
+    val uniAveNorthRampSource = Source("uni_n_src", this, () => Car(), 4, nStop, iArrivalRV, (525,290))
+    val uniAveNorthEntJunc = Junction("uni_n_ent_j", this, Sharp(0.0), (450, 270))
+    val northToUniEnt = Route("uni_ex_t_uni_ent", 4, uniAveNorthExJunc, uniAveNorthEntJunc, moveRV)
+    val northToWillow = Route("n_t_w", 4, uniAveNorthEntJunc, willowExJunc, moveRV)
+    val uniAveNorthEntRamp = Transport("uni_n_ent", uniAveNorthRampSource, uniAveNorthEntJunc, moveRV)
+
+    val uniAveSouthRampSink = Sink("uni_s_sink", (400,425))
+    val uniAveSouthExJunc = Junction("uni_s_ex_j", this, Sharp(0.0), (375,350))
+    val uniAveSouthExRamp = Transport("uni_s_exit", uniAveSouthExJunc, uniAveSouthRampSink, moveRV)
+    val southToUniEx = Route("s_t_uni_ex", 4, willowEntJunc, uniAveSouthExJunc, moveRV)
+    val uniAveSouthEntJunc = Junction("uni_s_ent_j", this, Sharp(0.0), (500, 465))
+    val southtoUniEnt = Route("s_t_uni_ent", 4, uniAveSouthExJunc, uniAveSouthEntJunc, moveRV)
+    val southToEmbar = Route("s_t_e", 4, uniAveSouthEntJunc, embarExJunc, moveRV)
+    val uniAveSouthEntSource = Source("uni_s_src", this, () => Car(), 5, nStop, iArrivalRV, (430,450))
+    val uniAveSouthEntRamp = Transport("uni_s_ent", uniAveSouthEntSource, uniAveSouthEntJunc, moveRV)
+
 
     /*val source = Source.group (this, () => Car (), nStop, (800, 250),
                                ("s1N", 0, iArrivalRV, (0, 0)),
@@ -108,8 +136,14 @@ class TrafficModel (name: String = "Traffic", reps: Int = 1, animating: Boolean 
         road += Route ("rb" + i, 2, light(i),  sink((i + 2) % 4), moveRV)
     end for*/
 
-    addComponent(northSink, southRampSource, southSource, sEntJunction, northRoad, northRampRoad, toNSink,
-      northSource, southSink, southRampSink, nExJunction, southRoad, toSSink, southRampRoad)
+    addComponent(northSink, embarRampSource, southSource, embarEntJunc, northSource, southSink,
+      embarRampSink, willowRampSource, willowRampSink, embarExJunc, willowExJunc, willowEntJunc,
+      uniAveNorthRampSource, uniAveNorthEntJunc, uniAveSouthRampSink, uniAveSouthExJunc,
+      uniAveSouthEntJunc, uniAveSouthEntSource,
+      uniAveSouthExRamp, southtoUniEnt, uniAveSouthEntRamp,
+      uniAveNorthRampSink, uniAveNorthExJunc, uniAveNorthExRamp, northToUniEx,southToUniEx,
+      southRoad, toSSink, willowToSink, willowEntRamp, southToEmbar, northToUniEnt,
+      embarExRamp, northRoad, embarEntRamp, uniAveNorthEntRamp, northToWillow, willowExRamp)
     //, southRampRoad, nExJunction, toSSink
     //addComponents (source, queue, light, sink, road.toList)
 
@@ -121,26 +155,45 @@ class TrafficModel (name: String = "Traffic", reps: Int = 1, animating: Boolean 
         def act (): Unit =
           if subtype == 0 then //from south source
             northRoad.lane(0).move()
-            sEntJunction.jump()
-            toNSink.lane(0).move()
+            embarEntJunc.jump()
+            northToWillow.lane(0).move()
+
             northSink.leave()
           end if
-          if subtype == 1 then //from south ramp source
-            northRampRoad.move()
-            sEntJunction.jump()
-            toNSink.lane(3).move()
+          if subtype == 1 then //from embarcadero entrance ramp
+            embarEntRamp.move()
+            embarEntJunc.jump()
+            northToWillow.lane(3).move()
             northSink.leave()
           end if
-          if subtype == 2 then
+          if subtype == 2 then //from north source
             southRoad.lane(3).move()
-            nExJunction.jump()
+            embarExJunc.jump()
             if coin.igen == 1 then
               toSSink.lane(3).move()
               southSink.leave()
             else
-              southRampRoad.move()
-              southRampSink.leave()
+              embarExRamp.move()
+              embarRampSink.leave()
             end if
+          end if
+          if subtype == 3 then //from willow entrance ramp
+            willowEntRamp.move()
+            willowEntJunc.jump()
+            southToEmbar.lane(3).move()
+            toSSink.lane(3).move()
+            southSink.leave()
+            print("")
+          end if
+          if subtype == 4 then //from uni north entrance ramp
+            uniAveNorthEntRamp.move()
+            uniAveNorthEntJunc.jump()
+            northToWillow.lane(3).move()
+            willowToSink.lane(3).move()
+            northSink.leave()
+          end if
+          if subtype == 5 then //from uni south entrance ramp
+              southSink.leave()
           end if
             /*val i = subtype                         // from North (0), East (1), South (2), West (3)
             val l = laneRV.igen                     // select lane l
@@ -148,7 +201,6 @@ class TrafficModel (name: String = "Traffic", reps: Int = 1, animating: Boolean 
             if light(i).shut then queue(i).waitIn ()
             road(i + 4).lane(l).move ()
             sink((i + 2) % 4).leave ()*/
-            print("")
         end act
 
     end Car
