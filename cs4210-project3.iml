@@ -8,6 +8,14 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="scala-sdk-3.0.2" level="application" />
-    <orderEntry type="library" name="scalation_3-0.1.0-SNAPSHOT" level="application" />
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$USER_HOME$/fake D/not porn/2021 school/simulation/exam1proj2 scalation jar/scalation_3-0.1.0-SNAPSHOT.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

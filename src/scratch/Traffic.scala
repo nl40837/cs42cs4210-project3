@@ -39,7 +39,7 @@ end RunTraffic
  *  @param stream     the base random number stream (0 to 999)
  */
 class TrafficModel (name: String = "Traffic", reps: Int = 1, animating: Boolean = true,
-                 aniRatio: Double = 8.0, nStop: Int = 100, stream: Int = 0)
+                 aniRatio: Double = 4.0, nStop: Int = 10, stream: Int = 0)
       extends Model (name, reps, animating, aniRatio):
 
     //--------------------------------------------------
@@ -61,11 +61,24 @@ class TrafficModel (name: String = "Traffic", reps: Int = 1, animating: Boolean 
 
     //--------------------------------------------------
     // Create Model Components
-    val southSource = Source("south_source", this, () => Car(), 0, nStop, iArrivalRV, (900,900))
-    val southRampSource = Source("south_ramp_source", this, () => Car(), 0, nStop, iArrivalRV, (800,750))
-    val northSink = Sink("north_sink", (10,10))
+    val southSource = Source("south_source", this, () => Car(), 0, nStop, iArrivalRV, (850,650))
+    //embarcadero rd entrance
+    val southRampSource = Source("emercadero_entrance", this, () => Car(), 1, nStop, iArrivalRV, (900,600))
+    val northSink = Sink("north_sink", (150,10))
+    val sEntJunction = Junction("s_ent_j", this, Sharp(0.0), (800,600))
+    val northRoad = Route("n_road", 4, southSource, sEntJunction, moveRV)
+    val northRampRoad = Transport("nr_road", southRampSource, sEntJunction, moveRV)
+    val toNSink = Route("t_nsink", 4, sEntJunction, northSink, moveRV)
 
-    val northRoad = 
+
+    val northSource = Source("north_source", this, () => Car(), 2, nStop, iArrivalRV, (10,10))
+    val southSink = Sink("south_sink", (750,700))
+    //emarcadero rd exit
+    val southRampSink = Sink("emercadero_exit", (660,700))
+    val nExJunction = Junction("n_ex_j", this, Sharp(0.0), (700,650))
+    val southRampRoad = Transport("sr_road", nExJunction, southRampSink, moveRV)
+    val southRoad = Route("s_road", 4, northSource, nExJunction, moveRV)
+    val toSSink = Route("t_ssink", 4, nExJunction, southSink, moveRV)
 
     /*val source = Source.group (this, () => Car (), nStop, (800, 250),
                                ("s1N", 0, iArrivalRV, (0, 0)),
@@ -95,15 +108,40 @@ class TrafficModel (name: String = "Traffic", reps: Int = 1, animating: Boolean 
         road += Route ("rb" + i, 2, light(i),  sink((i + 2) % 4), moveRV)
     end for*/
 
-    addComponent (northSink, southRampSource, southSource)
-    //addComponents ()
+    addComponent(northSink, southRampSource, southSource, sEntJunction, northRoad, northRampRoad, toNSink,
+      northSource, southSink, southRampSink, nExJunction, southRoad, toSSink, southRampRoad)
+    //, southRampRoad, nExJunction, toSSink
+    //addComponents (source, queue, light, sink, road.toList)
 
     //--------------------------------------------------
     // Specify Scripts for each Type of Simulation Actor
-
+    val coin = Bernoulli(0.50)
     case class Car () extends SimActor ("c", this):
 
         def act (): Unit =
+          if subtype == 0 then //from south source
+            northRoad.lane(0).move()
+            sEntJunction.jump()
+            toNSink.lane(0).move()
+            northSink.leave()
+          end if
+          if subtype == 1 then //from south ramp source
+            northRampRoad.move()
+            sEntJunction.jump()
+            toNSink.lane(3).move()
+            northSink.leave()
+          end if
+          if subtype == 2 then
+            southRoad.lane(3).move()
+            nExJunction.jump()
+            if coin.igen == 1 then
+              toSSink.lane(3).move()
+              southSink.leave()
+            else
+              southRampRoad.move()
+              southRampSink.leave()
+            end if
+          end if
             /*val i = subtype                         // from North (0), East (1), South (2), West (3)
             val l = laneRV.igen                     // select lane l
             road(i).lane(l).move ()
